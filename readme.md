@@ -52,7 +52,7 @@ public:
 ```
 
 #### `bm::run<type, period>` ####
-The entry function which runs a benchmark and creates records or sessions. Provides two overrides for micro- and macro-benchmarking.
+The entry function which runs a benchmark and creates records / sessions. Provides two overrides for micro- and macro-benchmarking.
 
 ```cpp
 template<typename type = double, typename period = std::milli>
