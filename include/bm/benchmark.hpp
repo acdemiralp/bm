@@ -77,8 +77,7 @@ public:
   recorder& operator=(const recorder&  that) = delete ;
   recorder& operator=(      recorder&& temp) = default;
   
-  template<typename function_type>
-  void record(const std::string& name, const std::function<function_type>& function)
+  void record(const std::string& name, const std::function<void()>& function)
   {
     //session_.records[name].second
   }
