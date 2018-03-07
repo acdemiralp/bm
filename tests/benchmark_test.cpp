@@ -32,7 +32,7 @@ TEST_CASE("Benchmark Test", "[benchmark]")
       std::generate(buffer.begin(), buffer.end(), std::rand);
     });
   });
-  for(auto record : session.records)
+  for(auto& record : session.records)
   {
     auto name               = record.first;
     auto mean               = record.second.mean              ();
