@@ -23,14 +23,28 @@ struct record
   }
   type variance          ()
   {
-    auto mean = mean();
+    auto m = mean();
     std::vector<type> differences(values.size());
-    std::transform(values.begin(), values.end(), differences.begin(), [mean] (const type& value) { return value - mean; });
+    std::transform(values.begin(), values.end(), differences.begin(), [m] (const type& value) { return value - m; });
     return std::inner_product(differences.begin(), differences.end(), differences.begin(), type(0)) / values.size();
   }
   type standard_deviation()
   {
     return std::sqrt(variance());
+  }
+
+  void to_csv(const std::string& filepath)
+  {
+    std::ofstream file(filepath);
+    file.precision(std::numeric_limits<type>::max_digits10);
+    
+    auto size = values.size();
+    for (auto j = 0; j < size; ++j)
+    {
+      file << values[j];
+      if (j != size - 1) 
+        file << ", ";
+    }
   }
 
   std::vector<type> values;
@@ -39,29 +53,30 @@ struct record
 template <typename type = double>
 struct session
 {
-  void to_csv(const std::string& filepath, const bool include_name = false)
+  void to_csv(const std::string& filepath, const bool include_name = true)
   {
     std::ofstream file(filepath);
     file.precision(std::numeric_limits<type>::max_digits10);
 
     for (auto& kvp : records)
     {
+      if (include_name) file << kvp.first << ", ";
+      
       auto& values = kvp.second.values;
       auto  size   = values.size();
 
-      if (include_name) file << kvp.first << ", ";
-      
       for (auto j = 0; j < size; ++j)
       {
         file << values[j];
-        if (j != size - 1) file << ", ";
+        if (j != size - 1) 
+          file << ", ";
       }
       
       file << "\n";
     }
   }
 
-  std::unordered_map<std::string, record<type>> records;
+  std::vector<std::pair<std::string, record<type>>> records;
 };
 
 template <typename type = double, typename period = std::milli>
@@ -84,8 +99,8 @@ public:
     function();
     const auto end   = std::chrono::high_resolution_clock::now();
 
-    if (index_ == 0) session_.records[name].values.resize(iterations_);
-    session_.records[name].values[index_] = std::chrono::duration<type, period>(end - start).count();
+    //if (index_ == 0) session_.records[name].values.resize(iterations_);
+    //session_.records[name].values[index_] = std::chrono::duration<type, period>(end - start).count();
   }
 
 protected:
@@ -94,6 +109,19 @@ protected:
   session<type>&    session_   ;
 };
 
+template<typename type = double, typename period = std::milli>
+record<type> run(const std::size_t iterations, const std::function<void()>& function)
+{
+  record<type> record {std::vector<type>(iterations)};
+  for (auto i = 0; i < iterations; ++i)
+  {
+    const auto start = std::chrono::high_resolution_clock::now();
+    function();
+    const auto end   = std::chrono::high_resolution_clock::now();
+    record.values[i] = std::chrono::duration<type, period>(end - start).count();
+  }
+  return record;
+}
 template<typename type = double, typename period = std::milli>
 session<type> run(const std::size_t iterations, const std::function<void(recorder<type, period>&)>& function)
 {
