@@ -43,6 +43,7 @@ struct session
   {
     std::ofstream file(filepath);
     file.precision(std::numeric_limits<type>::max_digits10);
+
     for (auto& kvp : records)
     {
       auto& values = kvp.second.values;
