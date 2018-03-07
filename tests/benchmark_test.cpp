@@ -1,32 +1,43 @@
 #include "catch.hpp"
 
-#include <bm/benchmark.hpp>
+#include <algorithm>
+#include <cstddef>
+#include <vector>
 
-std::vector<std::size_t> iota    (const std::size_t size)
-{
-  std::vector<std::size_t> vector(size);
-  std::iota(vector.begin(), vector.end(), 0);
-  return vector;
-}
-std::vector<std::size_t> generate(const std::size_t size)
-{
-  std::vector<std::size_t> vector(size);
-  std::generate(vector.begin(), vector.end(), std::rand);
-  return vector;
-}
+#include <bm/bm.hpp>
 
 TEST_CASE("Benchmark Test", "[benchmark]")
 {
-  auto session = bm::run<float, std::milli>(100, [ ] (bm::recorder<float, std::milli>& recorder)
+  std::vector<std::size_t> buffer(100000);
+
+  // Micro-benchmarking.
+  auto record = bm::run<float, std::milli>(100, [&] ()
   {
-    recorder.record("1-iota"    , [ ] ( )
+    std::iota(buffer.begin(), buffer.end(), 0);
+  });
+  auto mean               = record.mean              ();
+  auto variance           = record.variance          ();
+  auto standard_deviation = record.standard_deviation();
+  record.to_csv("iota_100000_values_100_iterations.csv");
+
+  // Macro-benchmarking.
+  auto session = bm::run<float, std::milli>(100, [&buffer] (bm::recorder<float, std::milli>& recorder)
+  {
+    recorder.record("iota", [&buffer] ()
     {
-      auto values = iota    (100000);
+      std::iota(buffer.begin(), buffer.end(), 0);
     });
-    recorder.record("2-generate", [ ] ( )
+    recorder.record("generate", [&buffer] ()
     {
-      auto values = generate(100000);
+      std::generate(buffer.begin(), buffer.end(), std::rand);
     });
   });
-  session.to_csv("functionx100.csv", true);
+  for(auto record : session.records)
+  {
+    auto name               = record.first;
+    auto mean               = record.second.mean              ();
+    auto variance           = record.second.variance          ();
+    auto standard_deviation = record.second.standard_deviation();
+  }
+  session.to_csv("first_iota_then_generate_100000_values_100_iterations.csv", true);
 }
