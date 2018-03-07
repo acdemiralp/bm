@@ -6,12 +6,11 @@
 #include <cstddef>
 #include <fstream>
 #include <functional>
+#include <limits>
 #include <numeric>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#include <boost/lexical_cast.hpp>
 
 namespace bm
 {
@@ -43,6 +42,7 @@ struct session
   void to_csv(const std::string& filepath, const bool include_name = false)
   {
     std::ofstream file(filepath);
+    file.precision(std::numeric_limits<type>::max_digits10);
     for (auto& kvp : records)
     {
       auto& values = kvp.second.values;
@@ -52,7 +52,7 @@ struct session
       
       for (auto j = 0; j < size; ++j)
       {
-        file << boost::lexical_cast<std::string>(values[j]);
+        file << values[j];
         if (j != size - 1) file << ", ";
       }
       
