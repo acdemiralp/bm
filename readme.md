@@ -73,30 +73,37 @@ session<type> run(const std::size_t iterations, const std::function<void(recorde
 
 int main(int argc, char** argv)
 {
-  std::vector<std::size_t> vector(100000);
+  std::vector<std::size_t> buffer(100000);
 
   // Micro-benchmarking.
   auto record = bm::run<float, std::milli>(100, [&] ()
   {
-    std::iota(vector.begin(), vector.end(), 0);
+    std::iota(buffer.begin(), buffer.end(), 0);
   });
-  auto mean = record.mean();
-  auto 	 = record.mean();
-  auto mean = record.mean();
+  auto mean               = record.mean              ();
+  auto variance           = record.variance          ();
+  auto standard_deviation = record.standard_deviation();
   record.to_csv("iota_100000_values_100_iterations.csv");
 
   // Macro-benchmarking.
-  auto session = bm::run<float, std::milli>(100, [&vector] (bm::recorder<float, std::milli>& recorder)
+  auto session = bm::run<float, std::milli>(100, [&buffer] (bm::recorder<float, std::milli>& recorder)
   {
-    recorder.record("iota", [&vector] ()
+    recorder.record("iota", [&buffer] ()
     {
-      std::iota(vector.begin(), vector.end(), 0);
+      std::iota(buffer.begin(), buffer.end(), 0);
     });
-    recorder.record("generate", [&vector] ()
+    recorder.record("generate", [&buffer] ()
     {
-      std::generate(vector.begin(), vector.end(), std::rand);
+      std::generate(buffer.begin(), buffer.end(), std::rand);
     });
   });
-  session.to_csv("iota_then_generate_100000_values_100_iterations.csv", true);
+  for(auto record : session.records)
+  {
+    auto name               = record.first;
+    auto mean               = record.second.mean              ();
+    auto variance           = record.second.variance          ();
+    auto standard_deviation = record.second.standard_deviation();
+  }
+  session.to_csv("first_iota_then_generate_100000_values_100_iterations.csv", true);
 }
 ```
