@@ -36,14 +36,14 @@ struct session
 }
 ```
 
-#### `bm::recorder<type, period>` ####
+#### `bm::session_recorder<type, period>` ####
 Helper class providing a single public method accepting a name and a function. 
 The function is run once, and its duration is appended to an internally managed session indexed by name. 
 Only used for macro-benchmarking.
 
 ```cpp
 template <typename type = double, typename period = std::milli>
-class recorder
+class session_recorder
 {
 public:
   void record(const std::string& name, const std::function<void()>& function) const {...}
@@ -59,7 +59,7 @@ template<typename type = double, typename period = std::milli>
 record<type> run(const std::size_t iterations, const std::function<void()>& function) {...}
 
 template<typename type = double, typename period = std::milli>
-session<type> run(const std::size_t iterations, const std::function<void(recorder<type, period>&)>& function) {...}
+session<type> run(const std::size_t iterations, const std::function<void(session_recorder<type, period>&)>& function) {...}
 ```
 
 ## Example Usage ##
@@ -86,7 +86,7 @@ int main(int argc, char** argv)
   record.to_csv("iota_100000_values_100_iterations.csv");
 
   // Macro-benchmarking.
-  auto session = bm::run<float, std::milli>(100, [&buffer] (bm::recorder<float, std::milli>& recorder)
+  auto session = bm::run<float, std::milli>(100, [&buffer] (bm::session_recorder<float, std::milli>& recorder)
   {
     recorder.record("iota", [&buffer] ()
     {

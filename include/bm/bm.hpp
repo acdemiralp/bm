@@ -9,7 +9,6 @@
 #include <limits>
 #include <numeric>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 namespace bm
@@ -80,18 +79,18 @@ struct session
 };
 
 template <typename type = double, typename period = std::milli>
-class recorder
+class session_recorder
 {
 public:
-  explicit recorder  (const std::size_t index, const std::size_t iterations, session<type>& session) : index_(index), iterations_(iterations), session_(session)
+  explicit session_recorder  (const std::size_t index, const std::size_t iterations, session<type>& session) : index_(index), iterations_(iterations), session_(session)
   {
 
   }
-  recorder           (const recorder&  that) = delete ;
-  recorder           (      recorder&& temp) = default;
-  virtual ~recorder  ()                      = default;
-  recorder& operator=(const recorder&  that) = delete ;
-  recorder& operator=(      recorder&& temp) = default;
+  session_recorder           (const session_recorder&  that) = delete ;
+  session_recorder           (      session_recorder&& temp) = default;
+  virtual ~session_recorder  ()                      = default;
+  session_recorder& operator=(const session_recorder&  that) = delete ;
+  session_recorder& operator=(      session_recorder&& temp) = default;
   
   void record(const std::string& name, const std::function<void()>& function) const
   {
@@ -110,7 +109,7 @@ protected:
 };
 
 template<typename type = double, typename period = std::milli>
-record<type> run(const std::size_t iterations, const std::function<void()>& function)
+record<type>  run(const std::size_t iterations, const std::function<void()>&                        function)
 {
   record<type> record {std::vector<type>(iterations)};
   for (auto i = 0; i < iterations; ++i)
@@ -123,12 +122,12 @@ record<type> run(const std::size_t iterations, const std::function<void()>& func
   return record;
 }
 template<typename type = double, typename period = std::milli>
-session<type> run(const std::size_t iterations, const std::function<void(recorder<type, period>&)>& function)
+session<type> run(const std::size_t iterations, const std::function<void(session_recorder<type, period>&)>& function)
 {
   session<type> session;
   for(auto i = 0; i < iterations; ++i)
   {
-    recorder<type, period> recorder(i, iterations, session);
+    session_recorder<type, period> recorder(i, iterations, session);
     function(recorder);
   }
   return session;

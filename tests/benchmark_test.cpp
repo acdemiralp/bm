@@ -21,7 +21,7 @@ TEST_CASE("Benchmark Test", "[benchmark]")
   record.to_csv("iota_100000_values_100_iterations.csv");
 
   // Macro-benchmarking.
-  auto session = bm::run<float, std::milli>(100, [&buffer] (bm::recorder<float, std::milli>& recorder)
+  auto session = bm::run<float, std::milli>(100, [&buffer] (bm::session_recorder<float, std::milli>& recorder)
   {
     recorder.record("iota", [&buffer] ()
     {
