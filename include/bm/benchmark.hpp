@@ -6,16 +6,16 @@
 #include <cstddef>
 #include <fstream>
 #include <functional>
-#include <map>
 #include <numeric>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <boost/lexical_cast.hpp>
 
 namespace bm
 {
-template <typename type>
+template <typename type = double>
 struct record
 {
   type mean              () 
@@ -37,7 +37,7 @@ struct record
   std::vector<type> values;
 };
 
-template <typename type>
+template <typename type = double>
 struct session
 {
   void to_csv(const std::string& filepath, const bool include_name = false)
@@ -46,7 +46,7 @@ struct session
     for (auto& kvp : records)
     {
       auto& values = kvp.second.values;
-      auto& size   = values.size();
+      auto  size   = values.size();
 
       if (include_name) file << kvp.first << ", ";
       
@@ -60,16 +60,16 @@ struct session
     }
   }
 
-  std::map<std::string, record<type>> records;
+  std::unordered_map<std::string, record<type>> records;
 };
 
-template <typename type, typename period = std::milli>
+template <typename type = double, typename period = std::milli>
 class recorder
 {
 public:
-  recorder           (session<type>& session, const std::size_t iteration) : session_(session), iteration_(iteration)
+  explicit recorder  (const std::size_t index, const std::size_t iterations, session<type>& session) : index_(index), iterations_(iterations), session_(session)
   {
-    
+
   }
   recorder           (const recorder&  that) = delete ;
   recorder           (      recorder&& temp) = default;
@@ -77,23 +77,30 @@ public:
   recorder& operator=(const recorder&  that) = delete ;
   recorder& operator=(      recorder&& temp) = default;
   
-  void record(const std::string& name, const std::function<void()>& function)
+  void record(const std::string& name, const std::function<void()>& function) const
   {
-    //session_.records[name].second
+    const auto start = std::chrono::high_resolution_clock::now();
+    function();
+    const auto end   = std::chrono::high_resolution_clock::now();
+
+    if (index_ == 0) session_.records[name].values.resize(iterations_);
+    session_.records[name].values[index_] = std::chrono::duration<type, period>(end - start).count();
   }
 
 protected:
-  session<type>&    session_  ;
-  const std::size_t iteration_;
+  const std::size_t index_     ;
+  const std::size_t iterations_;
+  session<type>&    session_   ;
 };
 
-template<typename type, typename period>
+template<typename type = double, typename period = std::milli>
 session<type> run(const std::size_t iterations, const std::function<void(recorder<type, period>&)>& function)
 {
   session<type> session;
   for(auto i = 0; i < iterations; ++i)
   {
-     
+    recorder<type, period> recorder(i, iterations, session);
+    function(recorder);
   }
   return session;
 }
