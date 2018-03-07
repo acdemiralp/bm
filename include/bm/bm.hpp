@@ -79,10 +79,11 @@ struct session
 };
 
 template <typename type = double, typename period = std::milli>
-class session_recorder
+class  session_recorder
 {
 public:
-  explicit session_recorder  (const std::size_t index, const std::size_t iterations, session<type>& session) : index_(index), iterations_(iterations), session_(session)
+  explicit session_recorder  (const std::size_t index, const std::size_t iterations, session<type>& session) 
+  : index_(index), iterations_(iterations), session_(session)
   {
 
   }
@@ -98,6 +99,7 @@ public:
     function();
     const auto end   = std::chrono::high_resolution_clock::now();
 
+    // TODO: Need a way to do this without boost and a std::find_if.
     //if (index_ == 0) session_.records[name].values.resize(iterations_);
     //session_.records[name].values[index_] = std::chrono::duration<type, period>(end - start).count();
   }
@@ -109,7 +111,7 @@ protected:
 };
 
 template<typename type = double, typename period = std::milli>
-record<type>  run(const std::size_t iterations, const std::function<void()>&                        function)
+record<type>  run(const std::size_t iterations, const std::function<void()>&                                function)
 {
   record<type> record {std::vector<type>(iterations)};
   for (auto i = 0; i < iterations; ++i)
