@@ -32,7 +32,7 @@ struct record
     return std::sqrt(variance());
   }
 
-  void to_csv(const std::string& filepath)
+  void to_csv            (const std::string& filepath)
   {
     std::ofstream file(filepath);
     file.precision(std::numeric_limits<type>::max_digits10);
@@ -93,15 +93,22 @@ public:
   session_recorder& operator=(const session_recorder&  that) = delete ;
   session_recorder& operator=(      session_recorder&& temp) = default;
   
-  void record(const std::string& name, const std::function<void()>& function) const
+  void record(const std::string& name, const std::function<void()>& function)
   {
     const auto start = std::chrono::high_resolution_clock::now();
     function();
     const auto end   = std::chrono::high_resolution_clock::now();
 
-    // TODO: Need a way to do this without boost and a std::find_if.
-    //if (index_ == 0) session_.records[name].values.resize(iterations_);
-    //session_.records[name].values[index_] = std::chrono::duration<type, period>(end - start).count();
+    // There isn't a cleaner way to do this without boost::multi_index...
+    // ...which is an unacceptible dependency for ~200 lines of code.
+    auto record = std::find_if(session_.records.begin(), session_.records.end(), 
+      [&name] (const std::pair<std::string, bm::record<type>>& record) { return record.first == name; });
+    if (record == session_.records.end())
+    {
+      session_.records.push_back({name, {std::vector<type>(iterations_)}});
+      record = std::prev(session_.records.end());
+    }
+    record->second.values[index_] = std::chrono::duration<type, period>(end - start).count();
   }
 
 protected:
