@@ -1,7 +1,6 @@
 ##################################################    Project     ##################################################
 cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
 project               (bm VERSION 1.0 LANGUAGES CXX)
-list                  (APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 set_property          (GLOBAL PROPERTY USE_FOLDERS ON)
 
 ##################################################    Options     ##################################################
@@ -10,19 +9,9 @@ option(BUILD_TESTS "Build tests." OFF)
 ##################################################    Sources     ##################################################
 set(PROJECT_SOURCES
   CMakeLists.txt
-  cmake/assign_source_group.cmake
-  cmake/import_library.cmake
-  
-  include/bm/benchmark.hpp
+  include/bm/bm.hpp
+  readme.md
 )
-include(assign_source_group)
-assign_source_group(${PROJECT_SOURCES})
-
-##################################################  Dependencies  ##################################################
-include(import_library)
-
-find_package  (Boost REQUIRED)
-import_library(Boost_INCLUDE_DIRS)
 
 ##################################################    Targets     ##################################################
 add_library(${PROJECT_NAME} INTERFACE)
