@@ -141,6 +141,17 @@ session<type> run(const std::size_t iterations, const std::function<void(session
   }
   return session;
 }
+
+template<typename type = double, typename period = std::milli>
+type          run(                              const std::function<void()>&                                function)
+{
+  return run<type, period>(std::size_t(1), function)[0];
+}
+template<typename type = double, typename period = std::milli>
+session<type> run(                              const std::function<void(session_recorder<type, period>&)>& function)
+{
+  return run<type, period>(std::size_t(1), function);
+}
 }
 
 #endif
