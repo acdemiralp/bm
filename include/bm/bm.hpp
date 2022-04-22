@@ -5,7 +5,6 @@
 #include <chrono>
 #include <cmath>
 #include <cstddef>
-#include <cstdint>
 #include <fstream>
 #include <functional>
 #include <limits>
@@ -23,23 +22,23 @@ namespace bm
 template <typename type = double>
 struct record
 {
-  type        mean              ()                             
+  constexpr type        mean              () const
   {
-    return std::accumulate(values.begin(), values.end(), type(0)) / values.size();
+    return std::accumulate(values.begin(), values.end(), type(0)) / static_cast<type>(values.size());
   }
-  type        variance          ()                            
+  constexpr type        variance          () const
   {
     auto m = mean();
     std::vector<type> differences(values.size());
     std::transform(values.begin(), values.end(), differences.begin(), [m] (const type& value) { return value - m; });
-    return std::inner_product(differences.begin(), differences.end(), differences.begin(), type(0)) / values.size();
+    return std::inner_product(differences.begin(), differences.end(), differences.begin(), type(0)) / static_cast<type>(values.size());
   }
-  type        standard_deviation()                            
+  constexpr type        standard_deviation() const
   {
     return std::sqrt(variance());
   }
                                                               
-  std::string to_string         ()                            
+  constexpr std::string to_string         () const
   {
     std::ostringstream stream;
     stream.precision(std::numeric_limits<type>::max_digits10);
@@ -49,12 +48,12 @@ struct record
     stream << mean() << "," << variance() << "," << standard_deviation();
     return stream.str();
   }
-  void        to_csv            (const std::string& filepath) 
+  constexpr void        to_csv            (const std::string& filepath) const
   {
     std::ofstream stream(filepath);
     stream << "name,";
-    for (auto i = 0; i < values.size(); ++i)
-      stream << "iteration " << i << ",";
+    for (std::size_t i = 0; i < values.size(); ++i)
+      stream << "run_" << i << ",";
     stream << "mean,variance,standard deviation\n";
     stream << to_string();
   }
@@ -68,19 +67,19 @@ struct session
 {
   virtual ~session() = default;
 
-  virtual std::string to_string()
+  virtual std::string to_string() const
   {
     std::ostringstream stream;
     for (auto& record : records)
       stream << record.to_string() << "\n";
     return stream.str();
   }
-  virtual void        to_csv   (const std::string& filepath)
+  virtual void        to_csv   (const std::string& filepath) const
   {
     std::ofstream stream(filepath);
     stream << "name,";
-    for (auto i = 0; i < records[0].values.size(); ++i)
-      stream << "iteration " << i << ",";
+    for (std::size_t i = 0; i < records[0].values.size(); ++i)
+      stream << "run_" << i << ",";
     stream << "mean,variance,standard deviation\n";
     stream << to_string();
   }
@@ -121,11 +120,11 @@ public:
     gathered_.resize(counter);
     MPI_Gatherv(local_string.data(), local_string.size(), MPI_CHAR, gathered_.data(), sizes.data(), displacements.data(), MPI_CHAR, master_rank_, communicator_);
   }
-  virtual std::string to_string()                            override
+  virtual std::string to_string()                            const override
   {
     return rank_ == master_rank_ ? gathered_ : session<type>::to_string();
   }
-  virtual void        to_csv   (const std::string& filepath) override
+  virtual void        to_csv   (const std::string& filepath) const override
   {
     if (rank_ != master_rank_)
       return;
@@ -133,7 +132,7 @@ public:
     std::ofstream stream(filepath);
     stream << "rank,name,";
     for (auto i = 0; i < records[0].values.size(); ++i)
-      stream << "iteration " << i << ",";
+      stream << "run_" << i << ",";
     stream << "mean,variance,standard deviation\n";
     stream << to_string();
   }
@@ -187,8 +186,8 @@ protected:
 template<typename type = double, typename period = std::milli>
 record<type>      run    (const std::function<void()>&                                function, const std::size_t iterations = 1)
 {
-  record<type> record {"", std::vector<type>(iterations)};
-  for (auto i = 0; i < iterations; ++i)
+  record<type> record {"benchmark", std::vector<type>(iterations)};
+  for (std::size_t i = 0; i < iterations; ++i)
   {
     const auto start = std::chrono::high_resolution_clock::now();
     function();
@@ -201,7 +200,7 @@ template<typename type = double, typename period = std::milli>
 session<type>     run    (const std::function<void(session_recorder<type, period>&)>& function, const std::size_t iterations = 1)
 {
   session<type> session;
-  for(auto i = 0; i < iterations; ++i)
+  for(std::size_t i = 0; i < iterations; ++i)
   {
     session_recorder<type, period> recorder(i, iterations, session);
     function(recorder);
@@ -213,7 +212,7 @@ template<typename type = double, typename period = std::milli>
 mpi_session<type> run_mpi(const std::function<void(session_recorder<type, period>&)>& function, const std::size_t iterations = 1, const MPI_Comm communicator = MPI_COMM_WORLD, const std::int32_t master_rank = 0)
 {
   mpi_session<type> session(communicator, master_rank);
-  for (auto i = 0; i < iterations; ++i)
+  for (std::size_t i = 0; i < iterations; ++i)
   {
     session_recorder<type, period> recorder(i, iterations, session);
     function(recorder);
