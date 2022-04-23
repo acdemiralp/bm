@@ -1,5 +1,5 @@
 # BM #
-Minimalist benchmarking library.
+Single header benchmarking library.
 
 ## Abstractions ##
 
@@ -15,31 +15,30 @@ struct record
   type variance          () {...}
   type standard_deviation() {...}
 
-  void to_csv 			 (const std::string& filepath) {...}
+  void to_csv            (const std::string& filepath) {...}
   
+  std::string       name  ;
   std::vector<type> values;
 }
 ```
 
 #### `bm::session<type>` ####
-Simple struct containing a flat map of records, indexed by a name. 
-Exports to csv. 
-Only used for macro-benchmarking.
+Simple struct containing a vector of records. 
+Exports to csv.
 
 ```cpp
 template<typename type = double>
 struct session
 {
-  void to_csv(const std::string& filepath, const bool include_name = true) {...}
+  void to_csv(const std::string& filepath) {...}
   
-  std::vector<std::pair<std::string, record<type>>> records;
+  std::vector<record<type>> records;
 }
 ```
 
 #### `bm::session_recorder<type, period>` ####
 Helper class providing a single public method accepting a name and a function. 
-The function is run once, and its duration is appended to an internally managed session indexed by name. 
-Only used for macro-benchmarking.
+The function is run once, and its duration is appended to an internally managed session.
 
 ```cpp
 template <typename type = double, typename period = std::milli>
@@ -56,10 +55,10 @@ The entry function which runs a benchmark and creates records / sessions. Provid
 
 ```cpp
 template<typename type = double, typename period = std::milli>
-record<type> run(const std::size_t iterations, const std::function<void()>& function) {...}
+record<type>  run(const std::function<void()>&                                function, const std::size_t iterations) {...}
 
 template<typename type = double, typename period = std::milli>
-session<type> run(const std::size_t iterations, const std::function<void(session_recorder<type, period>&)>& function) {...}
+session<type> run(const std::function<void(session_recorder<type, period>&)>& function, const std::size_t iterations) {...}
 ```
 
 ## Example Usage ##
