@@ -34,9 +34,7 @@ set_target_properties     (${PROJECT_NAME}_ PROPERTIES LINKER_LANGUAGE CXX)
 if(BUILD_TESTS)
   enable_testing()
 
-  set(PROJECT_TEST_SOURCES
-    tests/benchmark_test.cpp
-  )
+  set(PROJECT_TEST_SOURCES tests/benchmark_test.cpp)
 
   foreach(_SOURCE ${PROJECT_TEST_SOURCES})
     get_filename_component(_NAME ${_SOURCE} NAME_WE)
